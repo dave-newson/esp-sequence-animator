@@ -32,12 +32,9 @@ CRGB leds[NUM_LEDS];
 
 // Hardware: DFRobot MP3 Player & Audio Player
 #include "DFRobotDFPlayerMini.h"
-#include "SoftwareSerial.h"
-#define PIN_AUDIO_TX 5
-#define PIN_AUDIO_RX 4
-SoftwareSerial audioSerial(PIN_AUDIO_RX, PIN_AUDIO_TX);
 DFRobotDFPlayerMini audioPlayer;
 
+#define LOG //
 
 void jsonResponse(AsyncWebServerRequest* request, int httpCode, JsonDocument& json) {
     String response;
@@ -48,49 +45,47 @@ void jsonResponse(AsyncWebServerRequest* request, int httpCode, JsonDocument& js
 void setup() {
     Serial.begin(9600);
 
-    Serial.println("");
     delay(1000);
-    Serial.println("Booting...");
+    LOG("Booting...");
 
     // Network
     hostname += (String(DEVICE_PREFIX) + String(ESP.getChipId(), HEX));
 
     // Wifi
-    Serial.println("Wifi Connection...");
+    LOG("Wifi Connection...");
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        Serial.printf("WiFi Failed!\n");
+        LOG("WiFi Failed!\n");
         return;
     }
 
     // OTA
-    Serial.println("OTA service...");
+    LOG("OTA service...");
     ArduinoOTA.setPort(OTA_UPDATE_PORT);
     ArduinoOTA.setHostname(hostname.c_str());
     ArduinoOTA.setPassword(OTA_UPDATE_PASS);
     ArduinoOTA.begin();
 
     // LEDs
-    Serial.println("LED controller...");
+    LOG("LED controller...");
     FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
     FastLED.clear();
 
     // MP3 Player
-    Serial.println("Audio player...");
-    audioSerial.begin(9600);
-    audioPlayer.begin(audioSerial);
+    LOG("Audio player...");
+    audioPlayer.begin(Serial);
 
-    Serial.println("Webserver...");
-    Serial.println("Webserver starting ...");
-    Serial.print("IP Address: ");
-    Serial.println(WiFi.localIP());
+    LOG("Webserver...");
+    LOG("Webserver starting ...");
+    LOG("IP Address: ");
+    LOG(WiFi.localIP());
 
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
       request->send(200, "text/html",
 "<html>"
 "\n <body>"
-"\n   <h1>Addams Family Mansion</h1>"
+"\n   <h1>Sequence Animator</h1>"
 "\n   <h2>API Endpoints</h2>"
 "\n   <pre style=\"background: #eee;\">"
 "\n"
@@ -123,7 +118,7 @@ void setup() {
     server.on("/api/state", HTTP_POST, [](AsyncWebServerRequest *request) {
 
       outputJson.clear();
-      Serial.println("[WEB] /api/state");
+      LOG("[WEB] /api/state");
       if (!request->hasParam("body", true)) {
         outputJson["error"] = "Body missing";
         jsonResponse(request, 400, outputJson);
@@ -133,7 +128,7 @@ void setup() {
       // Derserialize
       DeserializationError error = deserializeJson(inputJson, request->getParam("body", true)->value());
       if (error) {
-      Serial.println("[WEB] ERROR: Can't decode");
+      LOG("[WEB] ERROR: Can't decode");
         outputJson["error"] = error.c_str();
         jsonResponse(request, 400, outputJson);
         return;
@@ -155,11 +150,11 @@ void setup() {
             continue;
           }
 
-          Serial.print("[WEB] Setting LED: ");
-          Serial.print(index, DEC);
-          Serial.print(": ");
-          Serial.print(color);
-          Serial.println("");
+          LOG("[WEB] Setting LED: ");
+          LOG(index, DEC);
+          LOG(": ");
+          LOG(color);
+          LOG("");
 
           // Str to CRGB
           color = color.substring(1);
@@ -190,7 +185,7 @@ void setup() {
     
     server.begin();
 
-    Serial.println("Boot complete.");
+    LOG("Boot complete.");
 }
 
 
