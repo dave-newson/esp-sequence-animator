@@ -1,5 +1,12 @@
 #include <Arduino.h>
 
+// Pins
+#define LED_BUILTIN 2 // For ESP12-F
+
+// Filesystem
+#include "FS.h"
+#include "LittleFS.h"
+
 // WIFI
 #include <ESP8266WiFi.h>
 #define DEVICE_PREFIX "test"
@@ -16,197 +23,128 @@ const char* password = "wifi_password";
 
 // Webserver
 #include <ESPAsyncWebServer.h>
+#include "Web/Homepage.h"
+#include "Web/SequencerApi.h"
 #include "ArduinoJson.h"
 AsyncWebServer server(80);
-const char* PARAM_INDEX = "index";
-const char* PARAM_COLOR = "color";
-StaticJsonDocument<512> inputJson;
-StaticJsonDocument<512> outputJson;
 
 // LEDs
 #include <FastLED.h>
 #define NUM_LEDS 50
+#define LED_BRIGHTNESS 10
 #define DATA_PIN PIN_SPI_MISO
 #define CLOCK_PIN PIN_SPI_SCK
 CRGB leds[NUM_LEDS];
+uint gHue = 0;
 
 // Hardware: DFRobot MP3 Player & Audio Player
 #include "DFRobotDFPlayerMini.h"
 DFRobotDFPlayerMini audioPlayer;
 
-#define LOG //
+// Sequencer
+Sequencer sequencer;
 
-void jsonResponse(AsyncWebServerRequest* request, int httpCode, JsonDocument& json) {
-    String response;
-    serializeJsonPretty(json, response);
-    request->send(httpCode, "application/json", response);
-}
+#define LOG Serial.println
 
 void setup() {
-    Serial.begin(9600);
 
-    delay(1000);
-    LOG("Booting...");
+  Serial.begin(9600);
 
-    // Network
-    hostname += (String(DEVICE_PREFIX) + String(ESP.getChipId(), HEX));
+  // Debug LED
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, false);
 
-    // Wifi
-    LOG("Wifi Connection...");
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
-    if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-        LOG("WiFi Failed!\n");
-        return;
-    }
+  delay(1000);
+  LOG("Booting...");
 
-    // OTA
-    LOG("OTA service...");
-    ArduinoOTA.setPort(OTA_UPDATE_PORT);
-    ArduinoOTA.setHostname(hostname.c_str());
-    ArduinoOTA.setPassword(OTA_UPDATE_PASS);
-    ArduinoOTA.begin();
+  LOG("Filesystem...");
+  if (!LittleFS.begin()){
+    LOG("ERROR: Failed to init filesystem.");
+  }
 
-    // LEDs
-    LOG("LED controller...");
-    FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
-    FastLED.clear();
+  if (!LittleFS.exists(".filesystem")) {
+    LOG("Formatting filesystem...");
+    LittleFS.format();
+    File testFile = LittleFS.open(F("/.filesystem"), "w");
+    testFile.print(" ");
+    testFile.close();
+  }
 
-    // MP3 Player
-    LOG("Audio player...");
-    audioPlayer.begin(Serial);
+  Serial.print("Free space:");
+  FSInfo info;
+  LittleFS.info(info);
+  Serial.println(info.totalBytes);
 
-    LOG("Webserver...");
-    LOG("Webserver starting ...");
-    LOG("IP Address: ");
-    LOG(WiFi.localIP());
+  // Network
+  hostname += (String(DEVICE_PREFIX) + String(ESP.getChipId(), HEX));
 
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-      request->send(200, "text/html",
-"<html>"
-"\n <body>"
-"\n   <h1>Sequence Animator</h1>"
-"\n   <h2>API Endpoints</h2>"
-"\n   <pre style=\"background: #eee;\">"
-"\n"
-"\n   GET  /api/device"
-"\n     Show information about the device"
-"\n"
-"\n   GET  /api/state"
-"\n     Get current device state"
-"\n"
-"\n   POST /api/state"
-"\n     Set state for peripherals on the device"
-"\n"
-"\n   POST /api/sequence/{slot}"
-"\n     Set a sequence on the device"
-"\n"
-"\n   GET  /api/sequence/{slot}"
-"\n     Retrieve a sequence from the device"
-"\n"
-"\n   POST /api/sequence/{slot}/play"
-"\n     Play the sequence"
-"\n"
-"\n   </pre>"
-"\n   <h2>OTA Update</h2>"
-"\n   <p>Over The Air Update is available on port 8622</p>"
-"\n </body>"
-"\n</html>"
-      );
-    });
+  // Wifi
+  LOG("Wifi Connection...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
+      LOG("WiFi Failed!\n");
+      return;
+  }
 
-    server.on("/api/state", HTTP_POST, [](AsyncWebServerRequest *request) {
+  LOG("IP Address: ");
+  LOG(WiFi.localIP());
 
-      outputJson.clear();
-      LOG("[WEB] /api/state");
-      if (!request->hasParam("body", true)) {
-        outputJson["error"] = "Body missing";
-        jsonResponse(request, 400, outputJson);
-        return;
-      }
+  // OTA
+  LOG("OTA service...");
+  ArduinoOTA.setPort(OTA_UPDATE_PORT);
+  ArduinoOTA.setHostname(hostname.c_str());
+  ArduinoOTA.setPassword(OTA_UPDATE_PASS);
+  ArduinoOTA.begin();
 
-      // Derserialize
-      DeserializationError error = deserializeJson(inputJson, request->getParam("body", true)->value());
-      if (error) {
-      LOG("[WEB] ERROR: Can't decode");
-        outputJson["error"] = error.c_str();
-        jsonResponse(request, 400, outputJson);
-        return;
-      }
+  // LEDs
+  LOG("LED controller...");
+  FastLED.addLeds<WS2801, DATA_PIN, CLOCK_PIN, RGB>(leds, NUM_LEDS);
+  FastLED.setBrightness(LED_BRIGHTNESS);
+  FastLED.clear();
 
-      // Process lights
-      JsonArray array = inputJson["keys"].as<JsonArray>();
-      for(JsonVariant v : array) {
+  // MP3 Player
+  LOG("Audio player...");
+  audioPlayer.begin(Serial);
 
-        // Light handler
-        if (v["type"] == "light") {
-          int index;
-          String color;
-          index = v["index"].as<int>();
-          color = v["color"].as<String>();
+  // Webserver
+  LOG("Webserver starting ...");
+  WebHompage::setup(&server);
+  SequencerApi::setup(&server, &sequencer, &audioPlayer, leds);
 
-          // Skip invalid indexes
-          if (index > NUM_LEDS) {
-            continue;
-          }
+  server.onNotFound([](AsyncWebServerRequest *request) {
+      request->send(404, "application/json", "{\"error\": \"Not found\"}");
+  });
 
-          LOG("[WEB] Setting LED: ");
-          LOG(index, DEC);
-          LOG(": ");
-          LOG(color);
-          LOG("");
+  server.begin();
 
-          // Str to CRGB
-          color = color.substring(1);
-          leds[index] = strtol(color.c_str(), NULL, 16);
-        }
-
-        if (v["type"] == "audio") {
-          int index;
-          int volume;
-          index = v["index"].as<int>();
-          volume = v["volume"].as<int>();
-          
-          audioPlayer.volume(volume); // From 0 to 30
-          audioPlayer.play(index);
-        }
-      }
-
-      // Update LEDs
-      FastLED.show();
-
-      request->send(200, "application/json", "{}");
-    });
-
-    server.onNotFound([](AsyncWebServerRequest *request) {
-        outputJson["error"] = "Not found";
-        jsonResponse(request, 404, outputJson);
-    });
-    
-    server.begin();
-
-    LOG("Boot complete.");
+  LOG("Boot complete.");
+  digitalWrite(LED_BUILTIN, __bool_true_false_are_defined);
 }
 
+#define FRAMES_PER_SECOND 120
+
+void ledExample()
+{
+
+  fill_rainbow( leds, NUM_LEDS, gHue, 7);
+  // send the 'leds' array out to the actual LED strip
+  FastLED.show();  
+  // insert a delay to keep the framerate modest
+  FastLED.delay(1000/FRAMES_PER_SECOND);
+  
+  // Iterate hue
+  EVERY_N_MILLISECONDS( 20 ) { gHue++; }
+}
 
 void loop() {
 
-    ArduinoOTA.handle();
+  ArduinoOTA.handle();
 
-/*
-    // Move a single white led 
-    for(int whiteLed = 0; whiteLed < NUM_LEDS; whiteLed = whiteLed + 1) {
-        // Turn our current led on to white, then show the leds
-        leds[whiteLed] = 0x101010; //CRGB::White;
+  ledExample();
 
-        // Show the leds (only one of which is set to white, from above)
-        FastLED.show();
+  sequencer.tick();
 
-        // Wait a little bit
-        delay(50);
-
-        // Turn our current led back to black for the next loop around
-        leds[whiteLed] = CRGB::Black;
-    }
-*/
+  // Blink LED
+  EVERY_N_SECONDS( 1 ) { digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN) ); }
 }
