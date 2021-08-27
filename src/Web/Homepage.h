@@ -10,5 +10,5 @@ class WebHompage
 {
 
 public:
-    static void setup(AsyncWebServer* server);
+    static void setup(AsyncWebServer*);
 };

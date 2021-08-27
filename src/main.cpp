@@ -42,6 +42,9 @@ uint gHue = 0;
 DFRobotDFPlayerMini audioPlayer;
 
 // Sequencer
+#include "Sequencer/Sequencer.h"
+#include "Sequencer/SequenceStore.h"
+SequenceStore sequenceStore;
 Sequencer sequencer;
 
 #define LOG Serial.println
@@ -70,10 +73,12 @@ void setup() {
     testFile.close();
   }
 
-  Serial.print("Free space:");
   FSInfo info;
   LittleFS.info(info);
+  Serial.print("Total space:");
   Serial.println(info.totalBytes);
+  Serial.print("Used space:");
+  Serial.println(info.usedBytes);
 
   // Network
   hostname += (String(DEVICE_PREFIX) + String(ESP.getChipId(), HEX));
@@ -110,7 +115,7 @@ void setup() {
   // Webserver
   LOG("Webserver starting ...");
   WebHompage::setup(&server);
-  SequencerApi::setup(&server, &sequencer, &audioPlayer, leds);
+  SequencerApi::setup(&server, &sequenceStore, &audioPlayer, leds);
 
   server.onNotFound([](AsyncWebServerRequest *request) {
       request->send(404, "application/json", "{\"error\": \"Not found\"}");
@@ -119,7 +124,7 @@ void setup() {
   server.begin();
 
   LOG("Boot complete.");
-  digitalWrite(LED_BUILTIN, __bool_true_false_are_defined);
+  digitalWrite(LED_BUILTIN, true);
 }
 
 #define FRAMES_PER_SECOND 120
@@ -127,7 +132,7 @@ void setup() {
 void ledExample()
 {
 
-  fill_rainbow( leds, NUM_LEDS, gHue, 7);
+  fill_rainbow(leds, NUM_LEDS, gHue, 7);
   // send the 'leds' array out to the actual LED strip
   FastLED.show();  
   // insert a delay to keep the framerate modest

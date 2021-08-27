@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Sequencer/Sequencer.h"
+#include "Sequencer/SequenceStore.h"
 #include "ESPAsyncWebServer.h"
 #include "DFRobotDFPlayerMini.h"
 #include <FastLED.h>
@@ -12,5 +12,10 @@ class SequencerApi
 {
 
 public:
-    static void setup(AsyncWebServer* server, Sequencer* sequencer, DFRobotDFPlayerMini* audioPlayer, CRGB leds[]);
+    static void setup(
+        AsyncWebServer*,
+        SequenceStore*,
+        DFRobotDFPlayerMini*,
+        CRGB[]
+    );
 };
