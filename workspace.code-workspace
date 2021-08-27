@@ -15,7 +15,15 @@
 			"string_view": "cpp",
 			"initializer_list": "cpp",
 			"ranges": "cpp",
-			"regex": "cpp"
+			"regex": "cpp",
+			"*.tcc": "cpp",
+			"bitset": "cpp",
+			"functional": "cpp",
+			"hash_map": "cpp",
+			"cmath": "cpp",
+			"memory": "cpp",
+			"random": "cpp",
+			"optional": "cpp"
 		}
 	}
 }

@@ -42,10 +42,15 @@ uint gHue = 0;
 DFRobotDFPlayerMini audioPlayer;
 
 // Sequencer
-#include "Sequencer/Sequencer.h"
+#include "Sequencer/SequencePlayer.h"
 #include "Sequencer/SequenceStore.h"
 SequenceStore sequenceStore;
-Sequencer sequencer;
+TrackHandlerRegistry trackHandlers;
+SequencePlayer sequencer(&trackHandlers);
+
+// Handler
+#include "SequenceHandler/PwmLedHandler.h"
+PwmLedHandler pwmLedHandler(PIN_SPI_MOSI);
 
 #define LOG Serial.println
 
@@ -59,6 +64,9 @@ void setup() {
 
   delay(1000);
   LOG("Booting...");
+
+  // Handler
+  trackHandlers.addHandler(0, "led1", &pwmLedHandler);
 
   LOG("Filesystem...");
   if (!LittleFS.begin()){
@@ -115,7 +123,7 @@ void setup() {
   // Webserver
   LOG("Webserver starting ...");
   WebHompage::setup(&server);
-  SequencerApi::setup(&server, &sequenceStore, &audioPlayer, leds);
+  SequencerApi::setup(&server, &sequenceStore, &sequencer);
 
   server.onNotFound([](AsyncWebServerRequest *request) {
       request->send(404, "application/json", "{\"error\": \"Not found\"}");
@@ -146,9 +154,12 @@ void loop() {
 
   ArduinoOTA.handle();
 
-  ledExample();
+//  ledExample();
 
-  sequencer.tick();
+  // Iterate hue
+  EVERY_N_MILLISECONDS( 20 ) {
+    sequencer.tick();
+  }
 
   // Blink LED
   EVERY_N_SECONDS( 1 ) { digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN) ); }

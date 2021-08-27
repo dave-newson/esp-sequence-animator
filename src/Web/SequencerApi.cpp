@@ -3,9 +3,10 @@
 #include "DFRobotDFPlayerMini.h"
 #include <FastLED.h>
 #include "Sequencer/SequenceStore.h"
+#include "Sequencer/SequencePlayer.h"
 
 StaticJsonDocument<512> inputJson;
-StaticJsonDocument<512> outputJson;
+StaticJsonDocument<512> sequence;
 
 #define LOG //
 
@@ -18,11 +19,11 @@ void jsonResponse(AsyncWebServerRequest* request, int httpCode, JsonDocument& js
 void SequencerApi::setup(
     AsyncWebServer* server,
     SequenceStore* sequenceStore,
-    DFRobotDFPlayerMini* audioPlayer,
-    CRGB leds[]
+    SequencePlayer* sequencePlayer
 ) {
 
-    server->on("/api/sequence", HTTP_POST, [&sequenceStore](AsyncWebServerRequest *request) {
+    // Save a sequence
+    server->on("/api/sequence", HTTP_POST, [sequenceStore](AsyncWebServerRequest *request) {
         
         // Content check
         if (!request->hasParam("id", false) || !request->hasParam("body", true)) {
@@ -46,7 +47,8 @@ void SequencerApi::setup(
         request->send(200, "application/json", output);
     });
 
-    server->on("/api/sequence", HTTP_GET, [&sequenceStore](AsyncWebServerRequest *request) {
+    // Fetch a sequence
+    server->on("/api/sequence", HTTP_GET, [sequenceStore](AsyncWebServerRequest *request) {
         
         // Content check
         if (!request->hasParam("id", false)) {
@@ -60,56 +62,24 @@ void SequencerApi::setup(
         request->send(200, "application/json", payload);
     });
 
-    server->on("/api/state", HTTP_POST, [&audioPlayer, &leds](AsyncWebServerRequest *request) {
-
-      outputJson.clear();
-
-      if (!request->hasParam("body", true)) {
-        outputJson["error"] = "Body missing";
-        jsonResponse(request, 400, outputJson);
-        return;
-      }
-
-      // Derserialize
-      DeserializationError error = deserializeJson(inputJson, request->getParam("body", true)->value());
-      if (error) {
-        outputJson["error"] = error.c_str();
-        jsonResponse(request, 400, outputJson);
-        return;
-      }
-
-      // Process lights
-      JsonArray array = inputJson["keys"].as<JsonArray>();
-      for(JsonVariant v : array) {
-
-        // Light handler
-        if (v["type"] == "light") {
-
-          int index;
-          String color;
-          index = v["index"].as<int>();
-          color = v["color"].as<String>();
-
-          // Str to CRGB
-          color = color.substring(1);
-          leds[index] = strtol(color.c_str(), NULL, 16);
+    server->on("/api/play", HTTP_POST, [sequenceStore, sequencePlayer](AsyncWebServerRequest *request) {
+        // Content check
+        if (!request->hasParam("id", false)) {
+            request->send(400, "application/json", "{}");
+            return;
         }
 
-        if (v["type"] == "audio") {
-          int index;
-          int volume;
-          index = v["index"].as<int>();
-          volume = v["volume"].as<int>();
-          
-          audioPlayer->volume(volume); // From 0 to 30
-          audioPlayer->play(index);
-        }
-      }
+        int id = request->getParam("id", false)->value().toInt();
+        String payload = sequenceStore->load(id);
 
-      // Update LEDs
-      FastLED.show();
+        DeserializationError error = deserializeJson(sequence, payload);
 
-      request->send(200, "application/json", "{}");
+        sequencePlayer->loop = true;
+//        sequencePlayer->stop();
+        sequencePlayer->load(&sequence);
+        sequencePlayer->play();
+
+        request->send(200, "application/json", "{}");
     });
 
 }

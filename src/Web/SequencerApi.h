@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Sequencer/SequenceStore.h"
+#include "Sequencer/SequencePlayer.h"
 #include "ESPAsyncWebServer.h"
 #include "DFRobotDFPlayerMini.h"
 #include <FastLED.h>
@@ -15,7 +16,6 @@ public:
     static void setup(
         AsyncWebServer*,
         SequenceStore*,
-        DFRobotDFPlayerMini*,
-        CRGB[]
+        SequencePlayer*
     );
 };
