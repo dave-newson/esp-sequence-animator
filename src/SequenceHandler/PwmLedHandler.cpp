@@ -16,14 +16,14 @@ void PwmLedHandler::reset()
     analogWrite(pin, 0);
 }
 
-void PwmLedHandler::tick(float time, JsonObject* kPrev, JsonObject* kNext)
+void PwmLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
 {
     // Timing
     float start = (*kPrev)["time"];
     float end = (*kNext)["time"];
 
     float pos = 0.0f;
-    if (start < end) {
+    if (time > start && start < end) {
         float length = (end - start);
         float now = time - start;
         pos = now / length;

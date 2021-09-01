@@ -1,8 +1,11 @@
 #include "FastLedHandler.h"
 
-FastLedHandler::FastLedHandler(CFastLED* _driver)
+#define LED_RANGE 512
+
+FastLedHandler::FastLedHandler(CRGB* _leds, CFastLED* _driver)
 {
     driver = _driver;
+    leds = _leds;
 }
 
 void FastLedHandler::reset()
@@ -11,18 +14,34 @@ void FastLedHandler::reset()
     driver->show();
 }
 
-void FastLedHandler::tick(float time, JsonObject* kPrev, JsonObject* kNext)
+void FastLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
 {
-    // TODO
-    return;
+    // Track props
+    int index = (*track)["index"];
 
-    int index = (*kPrev)["index"];
-    String color = (*kPrev)["color"];
+    // Timing
+    float start = (*kPrev)["time"];
+    float end = (*kNext)["time"];
 
-    // Str to CRGB
-    color = color.substring(1);
-    leds[index] = strtol(color.c_str(), NULL, 16);
+    // Calculate position between frames
+    float pos = 0.0f;
+    if (time > start && start < end) {
+        float length = (end - start);
+        float now = time - start;
+        pos = now / length;
+    }
 
-    // Update LEDs
-    FastLED.show();
+    // Float to unsigned-fract16
+    fract8 blend = (pos * 255.f);
+
+    // Colors
+    String valueIn = (*kPrev)["color"];
+    CRGB colorIn = strtol(valueIn.substring(1).c_str(), NULL, 16); 
+
+    String valueOut = (*kNext)["color"];
+    CRGB colorOut = strtol(valueOut.substring(1).c_str(), NULL, 16); 
+
+    // Color interpolate
+    CRGB fin = colorIn.lerp8(colorOut, blend);
+    leds[index] = fin;
 }

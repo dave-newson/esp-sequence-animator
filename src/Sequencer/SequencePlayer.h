@@ -9,7 +9,7 @@ class TrackHandler
 {
     public:
         virtual void reset() = 0;
-        virtual void tick(float time, JsonObject* kPrev, JsonObject* kNext) = 0;
+        virtual void tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time) = 0;
 };
 
 class TrackHandlerRegistry

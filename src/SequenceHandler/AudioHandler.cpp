@@ -11,7 +11,7 @@ void AudioHandler::reset()
     // TODO
 }
 
-void AudioHandler::tick(float time, JsonObject* kPrev, JsonObject* kNext)
+void AudioHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
 {
     // TODO
     return;

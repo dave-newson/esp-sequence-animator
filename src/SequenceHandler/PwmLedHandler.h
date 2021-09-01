@@ -8,7 +8,7 @@ class PwmLedHandler : public TrackHandler
     public:
         PwmLedHandler(int pin);
         virtual void reset();
-        virtual void tick(float time, JsonObject* kPrev, JsonObject* kNext);
+        virtual void tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
 
     private:
         int pin;

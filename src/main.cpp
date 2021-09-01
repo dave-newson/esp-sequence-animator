@@ -35,7 +35,6 @@ AsyncWebServer server(80);
 #define DATA_PIN PIN_SPI_MISO
 #define CLOCK_PIN PIN_SPI_SCK
 CRGB leds[NUM_LEDS];
-uint gHue = 0;
 
 // Hardware: DFRobot MP3 Player & Audio Player
 #include "DFRobotDFPlayerMini.h"
@@ -51,6 +50,8 @@ SequencePlayer sequencer(&trackHandlers);
 // Handler
 #include "SequenceHandler/PwmLedHandler.h"
 PwmLedHandler pwmLedHandler(PIN_SPI_MOSI);
+#include "SequenceHandler/FastLedHandler.h"
+FastLedHandler fastLedHandler(leds, &FastLED);
 
 #define LOG Serial.println
 
@@ -67,6 +68,7 @@ void setup() {
 
   // Handler
   trackHandlers.addHandler(0, "led1", &pwmLedHandler);
+  trackHandlers.addHandler(1, "fastled", &fastLedHandler);
 
   LOG("Filesystem...");
   if (!LittleFS.begin()){
@@ -137,30 +139,30 @@ void setup() {
 
 #define FRAMES_PER_SECOND 120
 
-void ledExample()
-{
-
-  fill_rainbow(leds, NUM_LEDS, gHue, 7);
-  // send the 'leds' array out to the actual LED strip
-  FastLED.show();  
-  // insert a delay to keep the framerate modest
-  FastLED.delay(1000/FRAMES_PER_SECOND);
-  
-  // Iterate hue
-  EVERY_N_MILLISECONDS( 20 ) { gHue++; }
-}
+int tickLoop = 0;
+int tickSeq = 0;
 
 void loop() {
+  tickLoop++;
 
   ArduinoOTA.handle();
 
-//  ledExample();
-
-  // Iterate hue
-  EVERY_N_MILLISECONDS( 20 ) {
+  // Play sequence
+  EVERY_N_MILLISECONDS( 1000 / FRAMES_PER_SECOND ) {
+    tickSeq++;
     sequencer.tick();
+    FastLED.show();
   }
 
   // Blink LED
-  EVERY_N_SECONDS( 1 ) { digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN) ); }
+  EVERY_N_SECONDS( 1 ) {
+    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN) );
+    Serial.print("[TICK][LOOP] ");
+    Serial.println(tickLoop);
+    tickLoop = 0;
+
+    Serial.print("[TICK][SEQN] ");
+    Serial.println(tickSeq);
+    tickSeq = 0;
+  }
 }

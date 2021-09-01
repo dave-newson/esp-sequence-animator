@@ -8,11 +8,11 @@
 class FastLedHandler : public TrackHandler
 {
     public:
-        FastLedHandler(CFastLED* driver);
+        FastLedHandler(CRGB* leds, CFastLED* driver);
         virtual void reset();
-        virtual void tick(float time, JsonObject* keyframeBefore, JsonObject* keyframeAfter);
+        virtual void tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
 
     private:
         CFastLED* driver;
-        CRGB leds[LED_COUNT];
+        CRGB* leds;
 };

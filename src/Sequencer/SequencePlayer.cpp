@@ -59,9 +59,12 @@ void SequencePlayer::scrub(float time)
 
         JsonArray frames = track["frames"].as<JsonArray>();
 
+        // Guard: Skip tracks with no frames
+        if (!frames.size()) continue;
+
         // Seed frames from zero
         JsonObject framePrev = frames[0].as<JsonObject>();
-        JsonObject frameNext = frames[0].as<JsonObject>();
+        JsonObject frameNext = framePrev;
 
         // Iterate frames to find current position
         for (auto frame : frames) {
@@ -76,7 +79,7 @@ void SequencePlayer::scrub(float time)
         }
 
         // Tick handler
-        handler->tick(position, &framePrev, &frameNext);
+        handler->tick(&track, &framePrev, &frameNext, position);
     }
 }
 
