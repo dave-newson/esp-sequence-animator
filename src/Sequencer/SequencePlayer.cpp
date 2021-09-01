@@ -33,6 +33,11 @@ void SequencePlayer::tick()
 
     // Stop when past end of sequence
     if (position > (*sequence)["length"]) {
+
+        // Reset all
+        handlers->reset();
+
+        // Loop or stop
         if (loop) {
             position = 0.0f;
         } else {

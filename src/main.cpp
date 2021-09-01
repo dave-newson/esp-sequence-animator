@@ -52,6 +52,8 @@ SequencePlayer sequencer(&trackHandlers);
 PwmLedHandler pwmLedHandler(PIN_SPI_MOSI);
 #include "SequenceHandler/FastLedHandler.h"
 FastLedHandler fastLedHandler(leds, &FastLED);
+#include "SequenceHandler/AudioHandler.h"
+AudioHandler audioHandler(&audioPlayer);
 
 #define LOG Serial.println
 
@@ -69,6 +71,7 @@ void setup() {
   // Handler
   trackHandlers.addHandler(0, "led1", &pwmLedHandler);
   trackHandlers.addHandler(1, "fastled", &fastLedHandler);
+  trackHandlers.addHandler(2, "audio", &audioHandler);
 
   LOG("Filesystem...");
   if (!LittleFS.begin()){
@@ -85,10 +88,10 @@ void setup() {
 
   FSInfo info;
   LittleFS.info(info);
-  Serial.print("Total space:");
-  Serial.println(info.totalBytes);
-  Serial.print("Used space:");
-  Serial.println(info.usedBytes);
+  LOG("Total space:");
+  LOG(info.totalBytes);
+  LOG("Used space:");
+  LOG(info.usedBytes);
 
   // Network
   hostname += (String(DEVICE_PREFIX) + String(ESP.getChipId(), HEX));
@@ -157,12 +160,12 @@ void loop() {
   // Blink LED
   EVERY_N_SECONDS( 1 ) {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN) );
-    Serial.print("[TICK][LOOP] ");
-    Serial.println(tickLoop);
+    LOG("[TICK][LOOP] ");
+    LOG(tickLoop);
     tickLoop = 0;
 
-    Serial.print("[TICK][SEQN] ");
-    Serial.println(tickSeq);
+    LOG("[TICK][SEQN] ");
+    LOG(tickSeq);
     tickSeq = 0;
   }
 }

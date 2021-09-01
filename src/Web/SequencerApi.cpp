@@ -75,11 +75,10 @@ void SequencerApi::setup(
         DeserializationError error = deserializeJson(sequence, payload);
 
         sequencePlayer->loop = true;
-//        sequencePlayer->stop();
+        sequencePlayer->stop();
         sequencePlayer->load(&sequence);
         sequencePlayer->play();
 
         request->send(200, "application/json", "{}");
     });
-
 }

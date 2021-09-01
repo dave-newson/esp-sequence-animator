@@ -8,16 +8,20 @@ AudioHandler::AudioHandler(DFRobotDFPlayerMini* _driver)
 
 void AudioHandler::reset()
 {
-    // TODO
+    driver->stop();
 }
 
 void AudioHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
 {
-    // TODO
-    return;
+    // Guard: Dont play twice
+    if (kPlayed == kPrev) return;
 
-    int index = (*kPrev)["index"];
-    int volume = (*kPrev)["volume"];
+    // Guard: Wait for time
+    if (time < (*kPrev)["time"]) return;
+
+    // Play
+    int index = (*kNext)["index"];
+    int volume = (*kNext)["volume"];
 
     driver->volume(volume); // From 0 to 30
     driver->play(index);

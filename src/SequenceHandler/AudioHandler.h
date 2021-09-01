@@ -11,4 +11,5 @@ class AudioHandler : public TrackHandler
         virtual void tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
     private:
         DFRobotDFPlayerMini* driver;
+        JsonObject* kPlayed;
 };
