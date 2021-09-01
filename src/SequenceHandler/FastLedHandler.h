@@ -15,4 +15,8 @@ class FastLedHandler : public TrackHandler
     private:
         CFastLED* driver;
         CRGB* leds;
+
+        CRGB calcStep(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
+        CRGB calcLinear(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
+        CRGB calcFlicker(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
 };
