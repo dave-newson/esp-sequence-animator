@@ -32,7 +32,7 @@ void FastLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNex
     }
 
     // Float to unsigned-fract16
-    fract8 blend = (pos * 255.f);
+    fract16 blend = (pos * 65535.f);
 
     // Colors
     String valueIn = (*kPrev)["color"];
@@ -42,6 +42,6 @@ void FastLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNex
     CRGB colorOut = strtol(valueOut.substring(1).c_str(), NULL, 16); 
 
     // Color interpolate
-    CRGB fin = colorIn.lerp8(colorOut, blend);
+    CRGB fin = colorIn.lerp16(colorOut, blend);
     leds[index] = fin;
 }
