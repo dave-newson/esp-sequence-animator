@@ -4,9 +4,10 @@
 #include <FastLED.h>
 #include "Sequencer/SequenceStore.h"
 #include "Sequencer/SequencePlayer.h"
+#include "../config.h"
 
-StaticJsonDocument<512> inputJson;
-StaticJsonDocument<512> sequence;
+StaticJsonDocument<SEQUENCE_BUFFER_SIZE> inputJson;
+StaticJsonDocument<SEQUENCE_BUFFER_SIZE> sequence;
 
 #define LOG //
 

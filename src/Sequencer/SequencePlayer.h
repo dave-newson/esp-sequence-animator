@@ -1,9 +1,9 @@
 #pragma once
 
 #include "ArduinoJSON.h"
+#include "../config.h"
 
 #define HANDLER_COUNT 3
-#define SEQUENCE_JSON_SIZE 512
 
 class TrackHandler
 {
@@ -38,7 +38,7 @@ class SequencePlayer
 public:
     SequencePlayer(TrackHandlerRegistry*);
 
-    void load(StaticJsonDocument<SEQUENCE_JSON_SIZE>*); 
+    void load(StaticJsonDocument<SEQUENCE_BUFFER_SIZE>*); 
     void play();
     void pause();
     void stop();
@@ -51,6 +51,6 @@ private:
     Status status = Status::STOPPED;
     unsigned long lastMillis = 0;
     float position = 1.0f;
-    StaticJsonDocument<SEQUENCE_JSON_SIZE>* sequence = nullptr;
+    StaticJsonDocument<SEQUENCE_BUFFER_SIZE>* sequence = nullptr;
     TrackHandlerRegistry* handlers;
 };

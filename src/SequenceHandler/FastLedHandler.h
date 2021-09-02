@@ -19,4 +19,6 @@ class FastLedHandler : public TrackHandler
         CRGB calcStep(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
         CRGB calcLinear(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
         CRGB calcFlicker(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
+        CRGB calcFlame(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
+        CRGB calcRainbow(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
 };

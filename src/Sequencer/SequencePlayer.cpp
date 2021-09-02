@@ -1,11 +1,12 @@
 #include "SequencePlayer.h"
+#include "../config.h"
 
 SequencePlayer::SequencePlayer(TrackHandlerRegistry* registry)
 {
     handlers = registry;
 };
 
-void SequencePlayer::load(StaticJsonDocument<SEQUENCE_JSON_SIZE>* document)
+void SequencePlayer::load(StaticJsonDocument<SEQUENCE_BUFFER_SIZE>* document)
 {
     Serial.println("[SEQ] Load");
     sequence = document;

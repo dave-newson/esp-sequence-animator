@@ -1,7 +1,5 @@
 #include <Arduino.h>
-
-// Pins
-#define LED_BUILTIN 2 // For ESP12-F
+#include "config.h"
 
 // Filesystem
 #include "FS.h"
@@ -167,5 +165,8 @@ void loop() {
     LOG("[TICK][SEQN] ");
     LOG(tickSeq);
     tickSeq = 0;
+
+    LOG("[TICK][FREE] ");
+    LOG(system_get_free_heap_size());
   }
 }
