@@ -1,11 +1,10 @@
 #include "FastLedHandler.h"
 
-#define LED_RANGE 512
-
-FastLedHandler::FastLedHandler(CRGB* _leds, CFastLED* _driver)
+FastLedHandler::FastLedHandler(CRGB* _leds, int _ledCount, CFastLED* _driver)
 {
     driver = _driver;
     leds = _leds;
+    ledCount = _ledCount;
 }
 
 void FastLedHandler::reset()
@@ -16,26 +15,29 @@ void FastLedHandler::reset()
 
 void FastLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
 {
-    // Track props
-    int index = (*track)["index"];
-
-    CRGB color;
-
-    if ((*kPrev)["effect"] == "step") {
-        color = calcStep(track, kPrev, kNext, time);
-    } else if ((*kPrev)["effect"] == "flicker") {
-        color = calcFlicker(track, kPrev, kNext, time);        
-    } else if ((*kPrev)["effect"] == "flame") {
-        color = calcFlame(track, kPrev, kNext, time);        
-    } else if ((*kPrev)["effect"] == "rainbow") {
-        color = calcRainbow(track, kPrev, kNext, time);        
-    } else {
-        color = calcLinear(track, kPrev, kNext, time);
+    // LED by singular index
+    if (!(*track).containsKey("indexes")) {
+        return;
     }
 
-    // Update index in colors array
-    leds[index] = color;
+    for (int index : (*track)["indexes"].as<JsonArray>()) {
+        CRGB color;
 
+        if ((*kPrev)["effect"] == "step") {
+            color = calcStep(track, kPrev, kNext, time);
+        } else if ((*kPrev)["effect"] == "flicker") {
+            color = calcFlicker(track, kPrev, kNext, time);        
+        } else if ((*kPrev)["effect"] == "flame") {
+            color = calcFlame(track, kPrev, index, time);        
+        } else if ((*kPrev)["effect"] == "rainbow") {
+            color = calcRainbow(track, kPrev, kNext, time);        
+        } else {
+            color = calcLinear(track, kPrev, kNext, time);
+        }
+
+        // Update index in colors array
+        leds[index] = color;
+    }
 }
 
 CRGB FastLedHandler::calcStep(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
@@ -86,7 +88,7 @@ CRGB FastLedHandler::calcFlicker(JsonObject* track, JsonObject* kPrev, JsonObjec
     return color.lerp16(black, blend);
 }
 
-CRGB FastLedHandler::calcFlame(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
+CRGB FastLedHandler::calcFlame(JsonObject* track, JsonObject* kPrev, int index, float time)
 {
     String value = (*kPrev)["color"];
     CRGB color = strtol(value.substring(1).c_str(), NULL, 16);
@@ -101,9 +103,7 @@ CRGB FastLedHandler::calcFlame(JsonObject* track, JsonObject* kPrev, JsonObject*
     fract16 shrink = random16() * (kPrev->containsKey("shrink") ? (*kPrev)["shrink"] : 0.1f);
     shrink *= 0.5f;
 
-    // Get the current color, to compound-subtract brightness from
-    int index = (*track)["index"];
-
+    // Shrink to black over current index
     CRGB black = color;
     black.nscale8_video(16);
     return leds[index].lerp16(black, shrink);
@@ -115,12 +115,12 @@ CRGB FastLedHandler::calcRainbow(JsonObject* track, JsonObject* kPrev, JsonObjec
     float speed = (kPrev->containsKey("speed") ? (*kPrev)["speed"] : 1.0f);
 
     // Size of color range between offsets (Hue delta)
-    int size = (kPrev->containsKey("size") ? (*kPrev)["size"] : 1);
+    uint8 size = (kPrev->containsKey("size") ? (*kPrev)["size"] : 1);
 
     // Offset of this LED
-    int offset = (kPrev->containsKey("offset") ? (*kPrev)["offset"] : 1);
+    uint8 offset = (kPrev->containsKey("offset") ? (*kPrev)["offset"] : 1);
 
-    int hue = 1;
+    uint8 hue = 1;
 
     // Time
     hue *= (time * speed);

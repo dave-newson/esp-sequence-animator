@@ -1,59 +1,55 @@
-#include <Arduino.h>
 #include "config.h"
+#include <Arduino.h>
 
 // Filesystem
-#include "FS.h"
 #include "LittleFS.h"
 
 // WIFI
 #include <ESP8266WiFi.h>
-#define DEVICE_PREFIX "test"
-String hostname("");
-
-// WIFI Auth
-const char* ssid = "wifi_ssid";
-const char* password = "wifi_password";
+String hostname(DEVICE_HOSTNAME);
 
 // OTA
 #include <ArduinoOTA.h>
-#define OTA_UPDATE_PORT 8266
-#define OTA_UPDATE_PASS "password"
 
 // Webserver
 #include <ESPAsyncWebServer.h>
 #include "Web/Homepage.h"
 #include "Web/SequencerApi.h"
-#include "ArduinoJson.h"
 AsyncWebServer server(80);
 
-// LEDs
+// LED: Windows
 #include <FastLED.h>
-#define NUM_LEDS 50
-#define LED_BRIGHTNESS 10
 #define DATA_PIN PIN_SPI_MISO
 #define CLOCK_PIN PIN_SPI_SCK
 CRGB leds[NUM_LEDS];
+
+// Button
+#include "OneButton.h"
+OneButton button(PIN_BUTTON, false, true);
 
 // Hardware: DFRobot MP3 Player & Audio Player
 #include "DFRobotDFPlayerMini.h"
 DFRobotDFPlayerMini audioPlayer;
 
+// JSON Document buffer, used in sequencer
+DynamicJsonDocument jsonDocument(JSON_DOC_SIZE);
+
 // Sequencer
 #include "Sequencer/SequencePlayer.h"
 #include "Sequencer/SequenceStore.h"
-SequenceStore sequenceStore;
+SequenceStore sequenceStore(&jsonDocument);
 TrackHandlerRegistry trackHandlers;
 SequencePlayer sequencer(&trackHandlers);
 
 // Handler
 #include "SequenceHandler/PwmLedHandler.h"
-PwmLedHandler pwmLedHandler(PIN_SPI_MOSI);
+PwmLedHandler pwmLedHandler(PIN_PORCH_LIGHT);
 #include "SequenceHandler/FastLedHandler.h"
-FastLedHandler fastLedHandler(leds, &FastLED);
+FastLedHandler fastLedHandler(leds, NUM_LEDS, &FastLED);
 #include "SequenceHandler/AudioHandler.h"
 AudioHandler audioHandler(&audioPlayer);
 
-#define LOG Serial.println
+int currentSequence = 0;
 
 void setup() {
 
@@ -92,16 +88,12 @@ void setup() {
   LOG(info.usedBytes);
 
   // Network
-  hostname += (String(DEVICE_PREFIX) + String(ESP.getChipId(), HEX));
+  hostname += String(ESP.getChipId(), HEX);
 
   // Wifi
   LOG("Wifi Connection...");
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  if (WiFi.waitForConnectResult() != WL_CONNECTED) {
-      LOG("WiFi Failed!\n");
-      return;
-  }
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
 
   LOG("IP Address: ");
   LOG(WiFi.localIP());
@@ -136,9 +128,38 @@ void setup() {
 
   LOG("Boot complete.");
   digitalWrite(LED_BUILTIN, true);
-}
 
-#define FRAMES_PER_SECOND 120
+  // Play first track on load
+  if (sequenceStore.exists(1)) {
+    JsonLoadResponse response = sequenceStore.loadJson(1);
+    sequencer.load(response.document);
+    sequencer.play();
+  }
+
+  // Button
+  button.setDebounceTicks(BUTTON_DEBOUNCE);
+  button.setClickTicks(BUTTON_PRESS);
+  button.setPressTicks(BUTTON_HOLD);
+
+  button.attachLongPressStop([]() {
+    sequencer.stop();
+  });
+
+  button.attachClick([]() {
+    currentSequence++;
+
+    if (!sequenceStore.exists(currentSequence)) {
+      currentSequence = 0;
+    }
+    sequencer.stop();
+
+    JsonLoadResponse result = sequenceStore.loadJson(currentSequence);
+    if (result.error == JsonLoadStatus::SUCCESS) {
+      sequencer.load(result.document);
+      sequencer.play();
+    }
+  });
+}
 
 int tickLoop = 0;
 int tickSeq = 0;
@@ -169,4 +190,6 @@ void loop() {
     LOG("[TICK][FREE] ");
     LOG(system_get_free_heap_size());
   }
+
+  button.tick();
 }

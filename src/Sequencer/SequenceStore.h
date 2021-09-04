@@ -2,20 +2,37 @@
 
 #include "Arduino.h"
 #include "FS.h"
+#include "ArduinoJson.h"
+
+enum JsonLoadStatus {
+    SUCCESS,
+    DOES_NOT_EXIST,
+    DECODE_ERROR,
+};
+
+struct JsonLoadResponse
+{
+    JsonLoadStatus error = JsonLoadStatus::SUCCESS;
+    DeserializationError documentError;
+    JsonDocument* document;
+};
 
 /**
- * Stores raw sequences as JSON to disk
+ * Store & load raw sequence as JSON to disk.
+ * Load from disk as JsonDocument, using provided buffer
  */
 class SequenceStore
 {
 
 public:
-    SequenceStore();
+    SequenceStore(JsonDocument* sequenceBuf);
     void save(int id, const String data);
+    bool exists(int id);
     String load(int id);
-    int freeBytes();
+    JsonLoadResponse loadJson(int id);
+    unsigned int freeBytes();
     
 private:
     void getFilename(char* filename, int id);
-
+    JsonDocument* documentBuf;
 };

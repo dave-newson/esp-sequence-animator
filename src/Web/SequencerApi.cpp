@@ -1,27 +1,36 @@
 #include "SequencerApi.h"
-#include "ArduinoJson.h"
-#include "DFRobotDFPlayerMini.h"
-#include <FastLED.h>
 #include "Sequencer/SequenceStore.h"
 #include "Sequencer/SequencePlayer.h"
-#include "../config.h"
-
-StaticJsonDocument<SEQUENCE_BUFFER_SIZE> inputJson;
-StaticJsonDocument<SEQUENCE_BUFFER_SIZE> sequence;
+#include "LittleFS.h"
 
 #define LOG //
-
-void jsonResponse(AsyncWebServerRequest* request, int httpCode, JsonDocument& json) {
-  String response;
-  serializeJsonPretty(json, response);
-  request->send(httpCode, "application/json", response);
-}
 
 void SequencerApi::setup(
     AsyncWebServer* server,
     SequenceStore* sequenceStore,
     SequencePlayer* sequencePlayer
 ) {
+
+    // Device status
+    server->on("/api/device", HTTP_GET, [sequenceStore](AsyncWebServerRequest *request) {
+        String out = "{";
+
+        out.concat("\"id\":");
+        out.concat(ESP.getChipId());
+
+        out.concat("\"heapFree\":");
+        out.concat(ESP.getFreeHeap());
+
+        FSInfo64 info;
+        LittleFS.info64(info);
+        out.concat("\"diskSize\":");
+        out.concat(info.totalBytes);
+        out.concat("\"diskUsed\":");
+        out.concat(info.usedBytes);
+
+        out.concat("}");
+        request->send(200, "application/json", out);
+    });
 
     // Save a sequence
     server->on("/api/sequence", HTTP_POST, [sequenceStore](AsyncWebServerRequest *request) {
@@ -71,13 +80,16 @@ void SequencerApi::setup(
         }
 
         int id = request->getParam("id", false)->value().toInt();
-        String payload = sequenceStore->load(id);
+        JsonLoadResponse result = sequenceStore->loadJson(id);
 
-        DeserializationError error = deserializeJson(sequence, payload);
+        // Handle errors
+        if (result.error != JsonLoadStatus::SUCCESS) {
+            request->send(500, "application/json", "{\"error\":\"Cannot parse json\"}");
+            return;
+        }
 
-        sequencePlayer->loop = true;
         sequencePlayer->stop();
-        sequencePlayer->load(&sequence);
+        sequencePlayer->load(result.document);
         sequencePlayer->play();
 
         request->send(200, "application/json", "{}");

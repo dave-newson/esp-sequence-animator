@@ -1,8 +1,7 @@
 #include "PwmLedHandler.h"
 #include "Arduino.h"
-#include "ArduinoJson.h"
 
-#define LED_RANGE 256
+#define PWM_LED_MAX 256
 
 PwmLedHandler::PwmLedHandler(int _pin)
 {
@@ -36,8 +35,8 @@ void PwmLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext
     // Value
     float value = lerp(valueIn, valueOut, pos);
 
-    int pinValue = (value * LED_RANGE);
-    pinValue = min(LED_RANGE, max(0, pinValue));
+    int pinValue = (value * PWM_LED_MAX);
+    pinValue = min(PWM_LED_MAX, max(0, pinValue));
 
     // Apply
     analogWrite(pin, pinValue);

@@ -20,9 +20,12 @@ void AudioHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext,
     if (time < (*kPrev)["time"]) return;
 
     // Play
-    int index = (*kNext)["index"];
-    int volume = (*kNext)["volume"];
+    int index = (*kPrev)["index"];
+    int volume = (*kPrev)["volume"];
 
-    driver->volume(volume); // From 0 to 30
+    // Prevent play twice by recording the played keyframe
+    kPlayed = kPrev;
+
+    driver->volume(volume); // 0 to 30
     driver->play(index);
 }

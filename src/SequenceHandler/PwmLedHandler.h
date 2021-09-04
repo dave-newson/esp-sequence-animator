@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Sequencer/SequencePlayer.h"
-#include <FastLED.h>
 
 class PwmLedHandler : public TrackHandler
 {

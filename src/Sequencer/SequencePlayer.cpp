@@ -1,12 +1,11 @@
 #include "SequencePlayer.h"
-#include "../config.h"
 
 SequencePlayer::SequencePlayer(TrackHandlerRegistry* registry)
 {
     handlers = registry;
 };
 
-void SequencePlayer::load(StaticJsonDocument<SEQUENCE_BUFFER_SIZE>* document)
+void SequencePlayer::load(JsonDocument* document)
 {
     Serial.println("[SEQ] Load");
     sequence = document;
@@ -39,7 +38,7 @@ void SequencePlayer::tick()
         handlers->reset();
 
         // Loop or stop
-        if (loop) {
+        if ((*sequence)["loop"].as<bool>()) {
             position = 0.0f;
         } else {
             stop();
