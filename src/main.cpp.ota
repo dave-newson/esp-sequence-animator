@@ -33,7 +33,7 @@ void setup() {
   delay(1000);
   LOG("Booting...");
   // Network
-  hostname += (String(DEVICE_PREFIX) + String(ESP.getChipId(), HEX));
+  hostname += String(ESP.getChipId(), HEX);
 
   // Wifi
   LOG("Wifi Connection...");
