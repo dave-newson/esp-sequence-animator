@@ -3,26 +3,10 @@
 
 // WIFI
 #include <ESP8266WiFi.h>
-<<<<<<< HEAD
-#define DEVICE_PREFIX "test"
-String hostname("");
-
-// WIFI Auth
-const char* ssid = "wifi_ssid";
-const char* password = "wifi_password";
-
-// OTA
-#include <ArduinoOTA.h>
-#define OTA_UPDATE_PORT 8266
-#define OTA_UPDATE_PASS "password"
-
-#define LOG //
-=======
 String hostname(DEVICE_HOSTNAME);
 
 // OTA
 #include <ArduinoOTA.h>
->>>>>>> 943cb40 (Further config shuffle)
 
 void setup() {
 
