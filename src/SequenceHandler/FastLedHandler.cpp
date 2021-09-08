@@ -5,18 +5,25 @@ FastLedHandler::FastLedHandler(CRGB* _leds, int _ledCount, CFastLED* _driver)
     driver = _driver;
     leds = _leds;
     ledCount = _ledCount;
+    lastChange = 0.0f;
 }
 
 void FastLedHandler::reset()
 {
     driver->clear();
     driver->show();
+    lastChange = 0.0f;
 }
 
 void FastLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
 {
     // LED by singular index
     if (!(*track).containsKey("indexes")) {
+        return;
+    }
+
+    if ((*kPrev)["effect"] == "come-and-go") {
+        calcComeAndGo(track, kPrev, time);
         return;
     }
 
@@ -134,4 +141,50 @@ CRGB FastLedHandler::calcRainbow(JsonObject* track, JsonObject* kPrev, JsonObjec
     hsv.sat = 240;
 
     return hsv;
+}
+
+void FastLedHandler::calcComeAndGo(JsonObject* track, JsonObject* kPrev, float time)
+{
+    if (!(*track).containsKey("indexes")) return;
+
+    // Guard: Wait for minimum delay
+    float delay = (float) ((*kPrev).containsKey("delayMin") ? (*kPrev)["delayMin"].as<float>() : 1.0f);
+    if (time < (lastChange + delay)) return;
+
+    // Pick a random LED to change state
+    JsonArray indexes = (*track)["indexes"].as<JsonArray>();
+    int index = indexes[random(0, indexes.size())];
+
+    // Check if minLeds are active
+    int minActive = ((*kPrev).containsKey("minActive") ? (*kPrev)["minActive"].as<int>() : 1);
+    int active = 0;
+    for (int index : indexes) {
+        active += (leds[index] != CRGB(0));
+    }
+    bool canDeactivate = (active > minActive);
+
+    // Color
+    String colorStr = (*kPrev).containsKey("color") ? (*kPrev)["color"].as<String>() : "#ffffff";
+    CRGB color = strtol(colorStr.substring(1).c_str(), NULL, 16);
+    CRGB current = leds[index];
+
+    // When deactivate is not allowed, always turn this LED on.
+    if (!canDeactivate) {
+        leds[index] = color;
+    }
+
+    // Guard: Chance that the light will be left on.
+    uint16_t chance = 65535.0f * ((*kPrev).containsKey("delayChance") ? (*kPrev)["delayChance"].as<float>() : 1.0f);
+    if (chance > random16()) {
+        lastChange = time;
+        return;
+    }
+
+    // Switch to BLACK if current color is NOT BLACK
+    if (current != CRGB(0)) {
+        color = CRGB::Black;
+    }
+
+    leds[index] = color;
+    lastChange = time;
 }
