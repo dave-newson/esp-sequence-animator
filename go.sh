@@ -86,7 +86,12 @@ curl -v --request POST --data '{"length": 60.0, "loop":true, "tracks": [
     ] }
 ] }' http://$IPADDR/api/sequence?id=6
 
+curl -v --request POST --data '{"tracks": [
+    {"type": "fastled", "indexes":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], "frames": [
+        { "effect":"come-and-go", "time":0.0, "color":"#402806", "delayMin":1, "delayChance":0.8, "minActive": 10 }
+    ] }
+] }' http://$IPADDR/api/sequence?id=7
 
 sleep 1
 
-curl -v --request POST http://$IPADDR/api/play?id=1
+curl -v --request POST http://$IPADDR/api/play?id=7
