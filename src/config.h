@@ -8,7 +8,7 @@
 #define BUTTON_HOLD 1000
 
 #define NUM_LEDS 30
-#define LED_BRIGHTNESS 10
+#define LED_BRIGHTNESS 255
 #define FRAMES_PER_SECOND 120
 
 #define PWM_LED_MAX 256
