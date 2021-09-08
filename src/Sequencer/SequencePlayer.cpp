@@ -32,7 +32,7 @@ void SequencePlayer::tick()
     lastMillis = now;
 
     // Stop when past end of sequence
-    if (position > (*sequence)["length"]) {
+    if ((*sequence).containsKey("length") && position > (*sequence)["length"]) {
 
         // Reset all
         handlers->reset();
