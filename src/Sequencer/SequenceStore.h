@@ -27,6 +27,7 @@ class SequenceStore
 public:
     SequenceStore(JsonDocument* sequenceBuf);
     void save(int id, const String data);
+    File getFile(int id);
     bool exists(int id);
     String load(int id);
     JsonLoadResponse loadJson(int id);

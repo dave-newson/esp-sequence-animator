@@ -15,6 +15,14 @@ void SequenceStore::save(int id, const String data) {
     testFile.close();
 }
 
+File SequenceStore::getFile(int id) {
+    char filename[32];
+    getFilename(filename, id);
+    
+    File file = LittleFS.open(filename, "a");
+    return file;
+}
+
 bool SequenceStore::exists(int id) {
 
     char filename[32];

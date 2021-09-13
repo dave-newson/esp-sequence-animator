@@ -31,7 +31,7 @@ void SequencerApi::setup(
     });
 
     // Save a sequence
-    server->on("/api/sequence", HTTP_POST, [sequenceStore](AsyncWebServerRequest *request) {
+    server->on("/api/sequence", HTTP_POST, [](AsyncWebServerRequest* request) {
         
         // Content check
         if (!request->hasParam("id", false) || !request->hasParam("body", true)) {
@@ -39,20 +39,36 @@ void SequencerApi::setup(
             return;
         }
 
-        int id = request->getParam("id", false)->value().toInt();
-        String payload = request->getParam("body", true)->value();
-
-        // Size check
-        if (sequenceStore->freeBytes() < payload.length()) {
-            request->send(413, "application/json", "{}");
-            return;
+        // ContentType requiremnt, for onRequestBody function to be called.
+        if (!request->hasHeader("ContentType") || request->header("ContentType").startsWith("application/json")) {
+            request->send(400, "application/json", "{\"error\":\"ContentType must be application/json\"}");
         }
 
-        sequenceStore->save(id, payload);
+    }, NULL, [sequenceStore](AsyncWebServerRequest* request, uint8_t* data, size_t len, size_t index, size_t total) {
+ 
+        int id = request->getParam("id", false)->value().toInt();
+        File f = sequenceStore->getFile(id);
 
-        String output = String("{\"id\":");
-        output += id + "}";
-        request->send(200, "application/json", output);
+        // Truncate for overwrite on first open
+        if (index == 0) {
+            f.truncate(0);
+            f.seek(0);
+        }
+
+        for (size_t i = 0; i < len; i++) {
+            f.write(data[i]);
+        }
+
+        if (index + len == total) {
+            f.close();
+            String output = "{";
+            output += "\"id\":";
+            output += id;
+            output += "\"length\":"; 
+            output += f.size();
+            output += "}";
+            request->send(200, "application/json", output);
+        }
     });
 
     // Fetch a sequence
