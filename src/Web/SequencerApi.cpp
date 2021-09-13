@@ -98,7 +98,10 @@ void SequencerApi::setup(
 
         // Handle errors
         if (result.error != JsonLoadStatus::SUCCESS) {
-            request->send(500, "application/json", "{\"error\":\"Cannot parse json\"}");
+            String response = "{\"error\":";
+            response.concat(result.documentError.f_str());
+            response.concat("}");
+            request->send(500, "application/json", response);
             return;
         }
 
