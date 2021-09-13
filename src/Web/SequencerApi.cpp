@@ -14,21 +14,19 @@ void SequencerApi::setup(
     // Device status
     server->on("/api/device", HTTP_GET, [sequenceStore](AsyncWebServerRequest *request) {
         String out = "{";
-
-        out.concat("\"id\":");
-        out.concat(ESP.getChipId());
-
-        out.concat("\"heapFree\":");
-        out.concat(ESP.getFreeHeap());
+        out += "\"id\":\"";
+        out += ESP.getChipId();
+        out += "\", \"heapFree\":\"";
+        out += ESP.getFreeHeap();
 
         FSInfo64 info;
         LittleFS.info64(info);
-        out.concat("\"diskSize\":");
-        out.concat(info.totalBytes);
-        out.concat("\"diskUsed\":");
-        out.concat(info.usedBytes);
+        out += "\", \"diskSize\":\"";
+        out += info.totalBytes;
+        out += "\", \"diskFree\":\"";
+        out += (info.totalBytes - info.usedBytes);
+        out += "\"}";
 
-        out.concat("}");
         request->send(200, "application/json", out);
     });
 
