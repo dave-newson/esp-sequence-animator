@@ -9,6 +9,7 @@ AudioHandler::AudioHandler(DFRobotDFPlayerMini* _driver)
 void AudioHandler::reset()
 {
     driver->stop();
+    kPlayed = nullptr;
 }
 
 void AudioHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
