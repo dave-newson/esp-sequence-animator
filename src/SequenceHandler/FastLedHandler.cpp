@@ -22,6 +22,11 @@ void FastLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNex
         return;
     }
 
+    // Relinquish control of the LEDs.
+    if ((*kPrev)["effect"] == "null") {
+        return;
+    }
+
     if ((*kPrev)["effect"] == "come-and-go") {
         calcComeAndGo(track, kPrev, time);
         return;
