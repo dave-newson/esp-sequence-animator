@@ -16,10 +16,13 @@ class FastLedHandler : public TrackHandler
         int ledCount = 0;
         float lastChange = 0.0f;
 
-        CRGB calcStep(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
-        CRGB calcLinear(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
-        CRGB calcFlicker(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
-        CRGB calcFlame(JsonObject* track, JsonObject* kPrev, int index, float time);
-        CRGB calcRainbow(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time);
-        void calcComeAndGo(JsonObject* track, JsonObject* kPrev, float time);
+        void calcStep       (JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time);
+        void calcLinear     (JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time);
+        void calcFlicker    (JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time);
+        void calcFlame      (JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time);
+        void calcRainbow    (JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time);
+        void calcComeAndGo  (JsonObject* track, JsonObject* kPrev, float time);
+
+        CRGB getColor(JsonVariant node);
+        void setColor(const JsonVariant node, const CRGB color);
 };

@@ -27,33 +27,29 @@ void FastLedHandler::tick(JsonObject* track, JsonObject* kPrev, JsonObject* kNex
         return;
     }
 
-    for (int index : (*track)["indexes"].as<JsonArray>()) {
-        CRGB color;
-
+    for (const auto& index : (*track)["indexes"].as<JsonArray>()) {
         if ((*kPrev)["effect"] == "step") {
-            color = calcStep(track, kPrev, kNext, time);
+            calcStep(track, kPrev, kNext, index, time);
         } else if ((*kPrev)["effect"] == "flicker") {
-            color = calcFlicker(track, kPrev, kNext, time);        
+            calcFlicker(track, kPrev, kNext, index, time);        
         } else if ((*kPrev)["effect"] == "flame") {
-            color = calcFlame(track, kPrev, index, time);        
+            calcFlame(track, kPrev, kNext, index, time);        
         } else if ((*kPrev)["effect"] == "rainbow") {
-            color = calcRainbow(track, kPrev, kNext, time);        
+            calcRainbow(track, kPrev, kNext, index, time);        
         } else {
-            color = calcLinear(track, kPrev, kNext, time);
+            calcLinear(track, kPrev, kNext, index, time);
         }
-
-        // Update index in colors array
-        leds[index] = color;
     }
 }
 
-CRGB FastLedHandler::calcStep(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
+void FastLedHandler::calcStep(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time)
 {
     String valueIn = (*kPrev)["color"];
-    return strtol(valueIn.substring(1).c_str(), NULL, 16);
+    CRGB color = strtol(valueIn.substring(1).c_str(), NULL, 16);
+    setColor(node, color);
 }
 
-CRGB FastLedHandler::calcLinear(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
+void FastLedHandler::calcLinear(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time)
 {
     // Timing
     float start = (*kPrev)["time"];
@@ -78,10 +74,10 @@ CRGB FastLedHandler::calcLinear(JsonObject* track, JsonObject* kPrev, JsonObject
     CRGB colorOut = strtol(valueOut.substring(1).c_str(), NULL, 16); 
 
     // Color interpolate
-    return colorIn.lerp16(colorOut, blend);
+    setColor(node, colorIn.lerp16(colorOut, blend));
 }
 
-CRGB FastLedHandler::calcFlicker(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
+void FastLedHandler::calcFlicker(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time)
 {
     String valueIn = (*kPrev)["color"];
     CRGB color = strtol(valueIn.substring(1).c_str(), NULL, 16);
@@ -92,10 +88,10 @@ CRGB FastLedHandler::calcFlicker(JsonObject* track, JsonObject* kPrev, JsonObjec
 
     CRGB black = 0;
 
-    return color.lerp16(black, blend);
+    setColor(node, color.lerp16(black, blend));
 }
 
-CRGB FastLedHandler::calcFlame(JsonObject* track, JsonObject* kPrev, int index, float time)
+void FastLedHandler::calcFlame(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time)
 {
     String value = (*kPrev)["color"];
     CRGB color = strtol(value.substring(1).c_str(), NULL, 16);
@@ -103,7 +99,7 @@ CRGB FastLedHandler::calcFlame(JsonObject* track, JsonObject* kPrev, int index, 
     // Flash rate: Random chance rate at which full brightness is restored.
     fract16 flash = 65535.0f * (kPrev->containsKey("flash") ? (*kPrev)["flash"] : 0.1f);
     if (random16() < flash) {
-        return color;
+        setColor(node, color);
     }
 
     // Shrink rate: Random affector for shrinking the flame
@@ -113,10 +109,10 @@ CRGB FastLedHandler::calcFlame(JsonObject* track, JsonObject* kPrev, int index, 
     // Shrink to black over current index
     CRGB black = color;
     black.nscale8_video(16);
-    return leds[index].lerp16(black, shrink);
+    setColor(node, getColor(node).lerp16(black, shrink));
 }
 
-CRGB FastLedHandler::calcRainbow(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, float time)
+void FastLedHandler::calcRainbow(JsonObject* track, JsonObject* kPrev, JsonObject* kNext, JsonVariant node, float time)
 {
     // Speed of hue iteration
     float speed = (kPrev->containsKey("speed") ? (*kPrev)["speed"] : 1.0f);
@@ -140,7 +136,7 @@ CRGB FastLedHandler::calcRainbow(JsonObject* track, JsonObject* kPrev, JsonObjec
     hsv.val = 255;
     hsv.sat = 240;
 
-    return hsv;
+    setColor(node, hsv);
 }
 
 void FastLedHandler::calcComeAndGo(JsonObject* track, JsonObject* kPrev, float time)
@@ -153,30 +149,32 @@ void FastLedHandler::calcComeAndGo(JsonObject* track, JsonObject* kPrev, float t
 
     // Pick a random LED to change state
     JsonArray indexes = (*track)["indexes"].as<JsonArray>();
-    int index = indexes[random(0, indexes.size())];
+    JsonVariant index = indexes[random(0, indexes.size())];
 
     // Check if minLeds are active
     int minActive = ((*kPrev).containsKey("minActive") ? (*kPrev)["minActive"].as<int>() : 1);
     int active = 0;
-    for (int index : indexes) {
-        active += (leds[index] != CRGB(0));
+    for (auto index : indexes) {
+        active += (getColor(index) != CRGB(0));
     }
     bool canDeactivate = (active > minActive);
 
     // Color
     String colorStr = (*kPrev).containsKey("color") ? (*kPrev)["color"].as<String>() : "#ffffff";
     CRGB color = strtol(colorStr.substring(1).c_str(), NULL, 16);
-    CRGB current = leds[index];
+    CRGB current = getColor(index);
+
+    lastChange = time;
 
     // When deactivate is not allowed, always turn this LED on.
     if (!canDeactivate) {
-        leds[index] = color;
+        setColor(index, color);
+        return;
     }
 
     // Guard: Chance that the light will be left on.
     uint16_t chance = 65535.0f * ((*kPrev).containsKey("delayChance") ? (*kPrev)["delayChance"].as<float>() : 1.0f);
     if (chance > random16()) {
-        lastChange = time;
         return;
     }
 
@@ -185,6 +183,28 @@ void FastLedHandler::calcComeAndGo(JsonObject* track, JsonObject* kPrev, float t
         color = CRGB::Black;
     }
 
-    leds[index] = color;
-    lastChange = time;
+    setColor(index, color);
+}
+
+CRGB FastLedHandler::getColor(JsonVariant node)
+{
+    if (node.is<JsonArray>()) {
+        node = node[0];
+    }
+
+    return leds[node.as<int>()];
+}
+
+void FastLedHandler::setColor(const JsonVariant node, const CRGB color)
+{
+    if (node.is<int>()) {
+        leds[node.as<int>()] = color;
+        return;
+    }
+
+    if (node.is<JsonArray>()) {
+        for (auto n : node.as<JsonArray>()) {
+            setColor(n, color);
+        }
+    }
 }
