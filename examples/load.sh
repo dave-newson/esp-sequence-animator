@@ -18,13 +18,13 @@ fi
 PAYLOAD="$(cat $FILE)"
 
 # Load, then play
-curl "$PAYLOAD" -H "Content-Type: application/json" http://$IPADDR/api/sequence?id=$SEQID
+curl -s --request POST -H "Content-Type: application/json" http://$IPADDR/api/sequence?id=$SEQID --data "$PAYLOAD"
 echo ""
 echo ""
-curl http://$IPADDR/api/sequence?id=$SEQID
+curl -s http://$IPADDR/api/sequence?id=$SEQID
 echo ""
 echo ""
-curl --request POST http://$IPADDR/api/play?id=$SEQID
+curl -s --request POST http://$IPADDR/api/play?id=$SEQID
 echo "Done."
 
 
