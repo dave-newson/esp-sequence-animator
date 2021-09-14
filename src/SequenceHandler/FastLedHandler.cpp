@@ -169,6 +169,12 @@ void FastLedHandler::calcComeAndGo(JsonObject* track, JsonObject* kPrev, float t
     CRGB color = strtol(colorStr.substring(1).c_str(), NULL, 16);
     CRGB current = getColor(index);
 
+    // Guard: If the LED is on, and we can't deactivate LEDs,
+    // skip this frame and try again on the next frame.
+    if (!canDeactivate && current == color) {
+        return;
+    }
+
     lastChange = time;
 
     // When deactivate is not allowed, always turn this LED on.
