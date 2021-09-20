@@ -1,31 +1,35 @@
 {"length": 20.0, "loop": false, "tracks": [
     {"type":"audio", "frames": [ {"time":0.0, "index":1, "volume":30} ] },
     {"type": "led1", "frames": [
-        { "time":0.0, "value":1.0 },
+        { "time":0.0, "value":0.0 },
 
+        { "time":1.79, "value":0.0 },
         { "time":1.8, "value":1.0 },
         { "time":1.95, "value":0.0 },
+        { "time":2.29, "value":0.0 },
         { "time":2.3, "value":1.0 },
         { "time":2.45, "value":0.0 },
-        { "time":3.0, "value":1.0 },
 
+        { "time":3.79, "value":0.0 },
         { "time":3.8, "value":1.0 },
         { "time":3.95, "value":0.0 },
+        { "time":4.29, "value":0.0 },
         { "time":4.3, "value":1.0 },
         { "time":4.45, "value":0.0 },
-        { "time":5.0, "value":1.0 },
 
+        { "time":11.79, "value":0.0 },
         { "time":11.8, "value":1.0 },
         { "time":11.95, "value":0.0 },
+        { "time":12.29, "value":0.0 },
         { "time":12.3, "value":1.0 },
         { "time":12.45, "value":0.0 },
-        { "time":13.0, "value":1.0 },
 
+        { "time":13.79, "value":0.0 },
         { "time":13.8, "value":1.0 },
         { "time":13.95, "value":0.0 },
+        { "time":14.29, "value":0.0 },
         { "time":14.3, "value":1.0 },
-        { "time":14.45, "value":0.0 },
-        { "time":15.0, "value":1.0 }
+        { "time":14.45, "value":0.0 }
 
         ]},
     {"type": "fastled", "indexes":[0,1,2,[3,4],[5,8],6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25], "frames": [

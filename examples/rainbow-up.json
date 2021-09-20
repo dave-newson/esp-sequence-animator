@@ -1,4 +1,7 @@
 {"tracks": [
+    {"type": "led1", "frames": [
+        { "time":0.0, "value":1.0 }
+    ]},
     {"type": "fastled", "indexes":[0, 3, 4, 9, 10, 17, 19, 18, 21], "frames": [
         { "effect":"rainbow", "time":0.0, "speed":100, "size":20, "offset":5 }
     ] },
