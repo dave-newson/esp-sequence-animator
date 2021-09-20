@@ -93,6 +93,8 @@ void SequencerApi::setup(
             return;
         }
 
+        sequencePlayer->stop();
+
         int id = request->getParam("id", false)->value().toInt();
         JsonLoadResponse result = sequenceStore->loadJson(id);
 
@@ -105,7 +107,6 @@ void SequencerApi::setup(
             return;
         }
 
-        sequencePlayer->stop();
         sequencePlayer->load(result.document);
         sequencePlayer->play();
 

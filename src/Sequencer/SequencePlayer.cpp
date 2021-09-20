@@ -90,8 +90,9 @@ void SequencePlayer::scrub(float time)
 
 void SequencePlayer::play()
 {
-    status = Status::PLAYING;
     position = 0.0f;
+    lastMillis = millis();
+    status = Status::PLAYING;
 }
 
 bool SequencePlayer::isPlaying() {
@@ -101,7 +102,7 @@ bool SequencePlayer::isPlaying() {
 void SequencePlayer::stop()
 {
     status = Status::STOPPED;
-
+    position = 0.0f;
     handlers->reset();
 };
 
