@@ -1,4 +1,4 @@
-{"length": 60.0, "loop":true, "tracks": [
+{"tracks": [
     {"type": "fastled", "indexes":[0, 3, 4, 9, 16, 17, 20], "frames": [
         { "effect":"rainbow", "time":0.0, "speed":100, "size":20, "offset":5 }
     ] },
