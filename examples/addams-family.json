@@ -29,9 +29,13 @@
         { "time":13.95, "value":0.0 },
         { "time":14.29, "value":0.0 },
         { "time":14.3, "value":1.0 },
-        { "time":14.45, "value":0.0 }
+        { "time":14.45, "value":0.0 },
 
-        ]},
+        { "time":15.2, "value":0.0 },
+        { "time":15.4, "value":1.0 },
+        { "time":16.0, "value":1.0 },
+        { "time":17.1, "value":0.0 }
+    ]},
     {"type": "fastled", "indexes":[0,1,2,[3,4],[5,8],6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25], "frames": [
         { "effect":"step", "time":0.0, "color":"#000000" },
         { "effect":"null", "time":0.1 },
