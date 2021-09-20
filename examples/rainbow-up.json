@@ -1,17 +1,17 @@
 {"tracks": [
-    {"type": "fastled", "indexes":[0, 3, 4, 9, 16, 17, 20], "frames": [
+    {"type": "fastled", "indexes":[0, 3, 4, 9, 10, 17, 19, 18, 21], "frames": [
         { "effect":"rainbow", "time":0.0, "speed":100, "size":20, "offset":5 }
     ] },
-    {"type": "fastled", "indexes":[1, 5, 8, 10, 15, 18, 21, 23], "frames": [
+    {"type": "fastled", "indexes":[1, 5, 8, 11, 16, 19, 22, 24], "frames": [
         { "effect":"rainbow", "time":0.0, "speed":100, "size":20, "offset":4 }
     ] },
-    {"type": "fastled", "indexes":[2, 6, 7, 11, 14, 19, 22], "frames": [
+    {"type": "fastled", "indexes":[2, 6, 7, 12, 15, 20, 23], "frames": [
         { "effect":"rainbow", "time":0.0, "speed":100, "size":20, "offset":3 }
     ] },
-    {"type": "fastled", "indexes":[12], "frames": [
+    {"type": "fastled", "indexes":[13], "frames": [
         { "effect":"rainbow", "time":0.0, "speed":100, "size":20, "offset":2 }
     ] },
-    {"type": "fastled", "indexes":[13], "frames": [
+    {"type": "fastled", "indexes":[14], "frames": [
         { "effect":"rainbow", "time":0.0, "speed":100, "size":20, "offset":1 }
     ] }
 ] }
