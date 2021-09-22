@@ -12,19 +12,27 @@ void SequencerApi::setup(
 ) {
 
     // Device status
-    server->on("/api/device", HTTP_GET, [sequenceStore](AsyncWebServerRequest *request) {
+    server->on("/api/device", HTTP_GET, [sequencePlayer, sequenceStore](AsyncWebServerRequest *request) {
         String out = "{";
+
+        // Device
         out += "\"id\":\"";
         out += ESP.getChipId();
         out += "\", \"heapFree\":\"";
         out += ESP.getFreeHeap();
 
+        // Disk
         FSInfo64 info;
         LittleFS.info64(info);
         out += "\", \"diskSize\":\"";
         out += info.totalBytes;
         out += "\", \"diskFree\":\"";
         out += (info.totalBytes - info.usedBytes);
+
+        // Playing
+        out += "\", \"playing\":";
+        out += sequencePlayer->isPlaying() ? "true" : "false";
+
         out += "\"}";
 
         request->send(200, "application/json", out);
