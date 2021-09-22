@@ -2,7 +2,7 @@
 
 #include "ArduinoJSON.h"
 
-#define HANDLER_COUNT 3
+#define HANDLER_COUNT 4
 
 class TrackHandler
 {

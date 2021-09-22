@@ -113,6 +113,11 @@ void SequencePlayer::pause()
 
 void TrackHandlerRegistry::addHandler(int idx, const char* name, TrackHandler* handler)
 {
+    // Guard: Prevent unbounded memory writes
+    if (idx < 0 || idx > HANDLER_COUNT) {
+        return;
+    }
+
     handlers[idx] = handler;
     hashMap[idx] = name;
 }

@@ -48,6 +48,8 @@ PwmLedHandler pwmLedHandler(PIN_PORCH_LIGHT);
 FastLedHandler fastLedHandler(leds, NUM_LEDS, &FastLED);
 #include "SequenceHandler/AudioHandler.h"
 AudioHandler audioHandler(&audioPlayer);
+#include "SequenceHandler/SequencerHandler.h"
+SequencerHandler sequencerHandler(&sequencer, &sequenceStore);
 
 int currentSequence = 0;
 
@@ -63,9 +65,10 @@ void setup() {
   LOG("Booting...");
 
   // Handler
-  trackHandlers.addHandler(0, "led1", &pwmLedHandler);
-  trackHandlers.addHandler(1, "fastled", &fastLedHandler);
-  trackHandlers.addHandler(2, "audio", &audioHandler);
+  trackHandlers.addHandler(0, "sequencer", &sequencerHandler);
+  trackHandlers.addHandler(1, "led1", &pwmLedHandler);
+  trackHandlers.addHandler(2, "fastled", &fastLedHandler);
+  trackHandlers.addHandler(3, "audio", &audioHandler);
 
   LOG("Filesystem...");
   if (!LittleFS.begin()){
