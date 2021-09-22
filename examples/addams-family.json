@@ -1,4 +1,5 @@
 {"length": 20.0, "loop": false, "tracks": [
+    {"type":"sequencer", "frames": [ {"time":19.0, "changeSequence":1} ] },
     {"type":"audio", "frames": [ {"time":0.0, "index":1, "volume":30} ] },
     {"type": "led1", "frames": [
         { "time":0.0, "value":0.0 },

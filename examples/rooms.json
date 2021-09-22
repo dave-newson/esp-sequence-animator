@@ -2,7 +2,11 @@
     {"type": "led1", "frames": [
         { "time":0.0, "value":1.0 }
     ]},
+    {"type": "fastled", "indexes":[2,[3,4],[5,8],7,10,12,16,18,20,21,22,24,25], "frames": [
+        { "time":0.0, "color":"#402806", "effect":"step" },
+        { "time":0.1, "effect": "null" }
+    ]},
     {"type": "fastled", "indexes":[0,1,2,[3,4],[5,8],6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], "frames": [
-        { "effect":"come-and-go", "time":0.0, "color":"#402806", "delayMin":1, "delayChance":0.8, "minActive": 10 }
+        { "effect":"come-and-go", "time":0.2, "color":"#402806", "delayMin":1, "delayChance":0.8, "minActive": 10 }
     ] }
 ] }
