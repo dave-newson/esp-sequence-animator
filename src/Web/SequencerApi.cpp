@@ -38,6 +38,31 @@ void SequencerApi::setup(
         request->send(200, "application/json", out);
     });
 
+    server->on("/api/sequence-list", HTTP_GET, [](AsyncWebServerRequest *request) {
+        // TODO: Drive this from disk-based json
+        const char* out = R"JSON(
+        {"sequences": [
+            {"id": 1, "name": "Random room lights"},
+            {"id": 2, "name": "Addams Family Theme"},
+            {"id": 3, "name": "Flames"},
+            {"id": 4, "name": "White"},
+            {"id": 5, "name": "Rainbow"},
+            {"id": 6, "name": "Electrocution"},
+            {"id": 7, "name": "Golf"},
+            {"id": 8, "name": "Tulley is here"},
+            {"id": 9, "name": "Ghost"}
+        ]}
+        )JSON";
+
+        request->send(200, "application/json", out);      
+    });
+
+    // Save sequence list
+    server->on("/api/sequence-list", HTTP_POST, [](AsyncWebServerRequest* request) {
+        // TODO
+            request->send(404, "application/json", "{}");
+    });
+
     // Save a sequence
     server->on("/api/sequence", HTTP_POST, [](AsyncWebServerRequest* request) {
         

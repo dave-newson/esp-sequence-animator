@@ -9,6 +9,7 @@ void WebHompage::setup(AsyncWebServer* server) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootswatch@4.5.2/dist/darkly/bootstrap.min.css" rel="stylesheet"/>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
   </head>
   <body>
     <div class="container-fluid">
@@ -16,23 +17,23 @@ void WebHompage::setup(AsyncWebServer* server) {
         
         <hr/>
         <h2>Control</h2>
-        <div class="d-grid gap-2">
-          <button class="btn btn-primary" onclick="play(1);">Sequence 1</button>
-          <button class="btn btn-primary" onclick="play(2);">Sequence 2</button>
-          <button class="btn btn-primary" onclick="play(3);">Sequence 3</button>
-          <button class="btn btn-primary" onclick="play(4);">Sequence 4</button>
-          <button class="btn btn-primary" onclick="play(5);">Sequence 5</button>
-          <button class="btn btn-primary" onclick="play(6);">Sequence 6</button>
-          <button class="btn btn-primary" onclick="play(7);">Sequence 7</button>
-          <button class="btn btn-primary" onclick="play(8);">Sequence 8</button>
+        <div class="d-grid gap-2" id="sequence-list">
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
         </div>
 
         <hr/>
         <h2>API Endpoints</h2>
-        <pre style=\"background: #eee;\">
+        <pre style="background: #444;">
 
     GET  /api/device
         Show information about the device
+
+    GET  /api/sequence-list
+        Retrieve the list of sequences
 
     POST /api/sequence?id={number}
         Set a sequence on the device
@@ -41,7 +42,7 @@ void WebHompage::setup(AsyncWebServer* server) {
         Retrieve a sequence from the device
 
     POST /api/play?id={number}
-        Play the sequence
+        Play the chosen sequence
 
         </pre>
 
@@ -51,14 +52,30 @@ void WebHompage::setup(AsyncWebServer* server) {
     </div>
 </body>
 <script>
-function play(id) {
-  const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", `/api/play?id=${id}`, true);
-  xhttp.send();
-}
+    function play(id) {
+        $.ajax({
+            url: `/api/play?id=${id}`,
+            method: 'post',
+        });
+    }
+
+    function loadSequenceList(data) {
+        $('#sequence-list').empty();
+
+        (data.sequences || []).forEach(sequence => {
+            $('#sequence-list')
+                .append(`<button class="btn btn-primary" onclick="play(${sequence.id});">${sequence.name}</button>`);
+        });
+    }
+
+    $(window).on('load', function () {
+        $.ajax({
+            url: "/api/sequence-list"
+        }).done(loadSequenceList);
+    });
 </script>
 </html>
-      )HTML";
+    )HTML";
 
     request->send(200, "text/html", out);      
   });
